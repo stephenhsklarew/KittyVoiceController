@@ -1,0 +1,118 @@
+# Claude Voice Controller Configuration
+# ─────────────────────────────────────────────
+# Copy this file to ~/.config/claude-voice/config.yaml
+# and customize for your projects.
+
+# Projects - each becomes a labeled Kitty window
+# ─────────────────────────────────────────────
+projects:
+  frontend:
+    directory: ~/code/myapp/frontend
+    command: claude
+    voice_alias:
+      - "front end"
+      - "front"
+      - "UI"
+
+  backend:
+    directory: ~/code/myapp/backend
+    command: claude
+    voice_alias:
+      - "back end"
+      - "back"
+      - "API"
+
+  infrastructure:
+    directory: ~/code/myapp/infra
+    command: claude
+    voice_alias:
+      - "infra"
+      - "devops"
+      - "terraform"
+
+  scratch:
+    directory: ~/scratch
+    command: claude
+    voice_alias:
+      - "scratchpad"
+      - "temp"
+      - "playground"
+
+# Voice Settings
+# ─────────────────────────────────────────────
+voice:
+  # Push-to-talk hotkey (hold to speak)
+  hotkey: ctrl+shift+v
+
+  # Whisper model for speech recognition
+  # Options: tiny, base, small, medium, large
+  # Larger = more accurate but slower and more memory
+  whisper_model: base
+
+  # Language hint for Whisper (or "auto" for detection)
+  language: en
+
+  # macOS voice for text-to-speech
+  # Run 'claude-voice voices' to see available options
+  tts_voice: Samantha
+
+  # Speech rate in words per minute (default ~175)
+  tts_rate: 200
+
+  # Volume 0.0 to 1.0
+  volume: 0.8
+
+  # Feedback sounds
+  sound_listen_start: true
+  sound_listen_stop: true
+  sound_error: true
+
+# Summarization
+# ─────────────────────────────────────────────
+summary:
+  # Maximum words to speak for summaries
+  max_spoken_length: 150
+
+  # Summary strategy:
+  #   smart      - Extract key info (files changed, errors, questions)
+  #   first_last - Read first and last few lines
+  #   full       - Read everything (only for short outputs)
+  strategy: smart
+
+  # What to automatically announce
+  announce_errors: true
+  announce_questions: true
+  announce_completion: true
+
+# Layout
+# ─────────────────────────────────────────────
+layout:
+  # Window arrangement: grid, horizontal, vertical
+  arrangement: grid
+
+  # Window size
+  window_width: 900
+  window_height: 700
+
+# Custom voice commands
+# ─────────────────────────────────────────────
+# These are shortcuts you can say instead of typing
+# Usage: "frontend run tests" -> sends "/run npm test"
+commands:
+  "run tests":
+    send: "/run npm test"
+
+  "check status":
+    send: "/status"
+
+  "commit changes":
+    send: "/commit"
+
+  "show diff":
+    send: "/diff"
+
+  "build":
+    send: "!npm run build"
+
+  "start server":
+    send: "!npm run dev"
