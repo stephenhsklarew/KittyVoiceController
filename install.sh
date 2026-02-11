@@ -5,6 +5,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="$HOME/.config/claude-voice"
+VENV_DIR="$SCRIPT_DIR/.venv"
 
 echo "╔════════════════════════════════════════════╗"
 echo "║   Kitty Voice Controller Installation     ║"
@@ -65,13 +66,55 @@ if ! brew list portaudio &> /dev/null 2>&1; then
 fi
 echo "✓ portaudio available"
 
-# Install Python package
+# Create virtual environment
 echo
-echo "Installing Python package..."
-cd "$SCRIPT_DIR"
-pip3 install -e . --quiet
+echo "Creating virtual environment..."
+if [ -d "$VENV_DIR" ]; then
+    echo "  Removing existing venv..."
+    rm -rf "$VENV_DIR"
+fi
+python3 -m venv "$VENV_DIR"
+echo "✓ Virtual environment created"
 
+# Install Python package in venv
+echo
+echo "Installing Python package (this may take a moment)..."
+source "$VENV_DIR/bin/activate"
+pip install --upgrade pip --quiet
+pip install -e "$SCRIPT_DIR" --quiet
+deactivate
 echo "✓ Package installed"
+
+# Create wrapper script
+echo
+echo "Creating command wrapper..."
+WRAPPER_SCRIPT="$SCRIPT_DIR/claude-voice"
+cat > "$WRAPPER_SCRIPT" << 'WRAPPER'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/.venv/bin/activate"
+python -m kitty_voice_controller.cli "$@"
+WRAPPER
+chmod +x "$WRAPPER_SCRIPT"
+
+# Add to PATH via symlink or shell profile
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$BIN_DIR"
+ln -sf "$WRAPPER_SCRIPT" "$BIN_DIR/claude-voice"
+
+# Ensure ~/.local/bin is in PATH
+SHELL_RC="$HOME/.zshrc"
+[ -f "$HOME/.bashrc" ] && [ ! -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.bashrc"
+
+if ! grep -q '\.local/bin' "$SHELL_RC" 2>/dev/null; then
+    echo '' >> "$SHELL_RC"
+    echo '# Local binaries' >> "$SHELL_RC"
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
+    echo "  Added ~/.local/bin to PATH in $SHELL_RC"
+fi
+export PATH="$HOME/.local/bin:$PATH"
+
+echo "✓ Command 'claude-voice' installed"
 
 # Create config directory
 echo
@@ -113,9 +156,11 @@ fi
 # Download Whisper model
 echo
 echo "Pre-downloading Whisper model (this may take a moment)..."
-python3 -c "import whisper; whisper.load_model('base')" 2>/dev/null || {
+source "$VENV_DIR/bin/activate"
+python -c "import whisper; whisper.load_model('base')" 2>/dev/null || {
     echo "  Model will be downloaded on first run"
 }
+deactivate
 echo "✓ Whisper model ready"
 
 echo
@@ -124,9 +169,10 @@ echo "║         Installation Complete!            ║"
 echo "╚════════════════════════════════════════════╝"
 echo
 echo "Next steps:"
-echo "1. Edit your projects in: $CONFIG_DIR/config.yaml"
-echo "2. Restart Kitty terminal (if remote control was just added)"
-echo "3. Run: claude-voice start"
+echo "1. Restart your shell or run: source $SHELL_RC"
+echo "2. Edit your projects in: $CONFIG_DIR/config.yaml"
+echo "3. Restart Kitty terminal (if remote control was just added)"
+echo "4. Run: claude-voice start"
 echo
 echo "Quick commands:"
 echo "  claude-voice list       # Show configured projects"
