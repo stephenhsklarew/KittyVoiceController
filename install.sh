@@ -30,12 +30,32 @@ echo "✓ Python $PYTHON_VERSION"
 
 # Check for Kitty
 echo "Checking for Kitty terminal..."
-if ! command -v kitty &> /dev/null; then
+KITTY_PATH=""
+if command -v kitty &> /dev/null; then
+    KITTY_PATH="$(command -v kitty)"
+elif [ -x "/Applications/kitty.app/Contents/MacOS/kitty" ]; then
+    KITTY_PATH="/Applications/kitty.app/Contents/MacOS/kitty"
+    echo "  Found Kitty in Applications, adding to PATH..."
+    export PATH="/Applications/kitty.app/Contents/MacOS:$PATH"
+
+    # Add to shell profile if not already there
+    SHELL_RC="$HOME/.zshrc"
+    [ -f "$HOME/.bashrc" ] && [ ! -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.bashrc"
+
+    if ! grep -q "kitty.app/Contents/MacOS" "$SHELL_RC" 2>/dev/null; then
+        echo '' >> "$SHELL_RC"
+        echo '# Kitty terminal CLI' >> "$SHELL_RC"
+        echo 'export PATH="/Applications/kitty.app/Contents/MacOS:$PATH"' >> "$SHELL_RC"
+        echo "  Added Kitty to $SHELL_RC"
+    fi
+fi
+
+if [ -z "$KITTY_PATH" ]; then
     echo "❌ Kitty terminal not found"
     echo "  Install with: brew install --cask kitty"
     exit 1
 fi
-echo "✓ Kitty terminal found"
+echo "✓ Kitty terminal found: $KITTY_PATH"
 
 # Check for portaudio (required for pyaudio)
 echo "Checking for portaudio..."
